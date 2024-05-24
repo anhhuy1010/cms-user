@@ -1,0 +1,13 @@
+version: "2"
+services:
+  app:
+    container_name: cms-user
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile-dev
+    volumes:
+      - ./:/go/src/github.com/anhhuy1010/cms-user
+    ports:
+      - 8002:8002
+      - 5002:5002
+
