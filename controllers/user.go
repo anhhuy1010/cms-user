@@ -215,15 +215,8 @@ func (userCtl UserController) UpdateStatus(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, respond.Success(user.Uuid, "update successfully"))
 }
-func (userCtl UserController) Create(c *gin.Context) { // tạo một user mới
-	// var reqI request.GetInsertRequest
-	// // kiểm tra đầu vào
-	// err := c.ShouldBindWith(&reqI, binding.Query)
-	// if err != nil {
-	// 	_ = c.Error(err)
-	// 	c.JSON(http.StatusBadRequest, respond.MissingParams())
-	// 	return
-	// }
+func (userCtl UserController) Create(c *gin.Context) {
+
 	var req request.GetInsertRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
