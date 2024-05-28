@@ -237,3 +237,39 @@ func (userCtl UserController) Create(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, respond.Success(userData.Uuid, "update successfully"))
 }
+
+// resquest: username, password
+// respone: token
+func (userCtl UserController) Login(c *gin.Context) {
+	userModel := models.Users{}
+	// get data request
+	var req request.LoginRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusBadRequest, respond.MissingParams())
+		return
+	}
+	// get user from database with username
+	condition := bson.M{"username": req.UserName}
+	user, err := userModel.FindOne(condition) // get user from database
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusOK, respond.ErrorCommon("user not found"))
+		return
+	}
+	//check password
+	if user.Password != req.Password {
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("password not found"))
+		return
+	}
+	//get token with username
+	token, err := util.GenerateJWT(user.Username)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("found"))
+		return
+	}
+	//return response
+	c.JSON(http.StatusOK, respond.Success(request.LoginResponse{Token: token}, "login successfully"))
+}
