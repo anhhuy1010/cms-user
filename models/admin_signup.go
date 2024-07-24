@@ -12,25 +12,22 @@ import (
 	"github.com/anhhuy1010/cms-user/constant"
 )
 
-type CustomersSignUp struct {
-	Uuid      string    `json:"uuid,omitempty" bson:"uuid"`
-	Name      string    `json:"name" bson:"name"`
-	Age       int       `json:"age" bson:"age"`
+type AdminSignUp struct {
+	Uuid      string    `json:"uuid" bson:"uuid"`
 	Password  string    `json:"password" bson:"password"`
-	Email     string    `json:"email" bson:"email"`
-	Username  string    `json:"username,omitempty" bson:"username"`
+	Username  string    `json:"username" bson:"username"`
 	IsActive  int       `json:"is_active" bson:"is_active"`
 	IsDelete  int       `json:"is_delete" bson:"is_delete"`
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
 }
 
-func (u *CustomersSignUp) Model() *mongo.Collection {
+func (u *AdminSignUp) Model() *mongo.Collection {
 	db := database.GetInstance()
-	return db.Collection("customersSignUp")
+	return db.Collection("adminSignUp")
 }
 
-func (u *CustomersSignUp) FindOne(conditions map[string]interface{}) (*CustomersSignUp, error) {
+func (u *AdminSignUp) FindOne(conditions map[string]interface{}) (*AdminSignUp, error) {
 	coll := u.Model()
 
 	conditions["is_delete"] = constant.UNDELETE
@@ -42,7 +39,7 @@ func (u *CustomersSignUp) FindOne(conditions map[string]interface{}) (*Customers
 	return u, nil
 }
 
-func (u *CustomersSignUp) Insert() (interface{}, error) {
+func (u *AdminSignUp) Insert() (interface{}, error) {
 	coll := u.Model()
 
 	resp, err := coll.InsertOne(context.TODO(), u)

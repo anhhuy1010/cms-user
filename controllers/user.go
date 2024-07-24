@@ -10,6 +10,7 @@ import (
 	"github.com/anhhuy1010/cms-user/helpers/util"
 	"github.com/anhhuy1010/cms-user/models"
 	request "github.com/anhhuy1010/cms-user/request/user"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"go.mongodb.org/mongo-driver/bson"
@@ -41,29 +42,26 @@ func (userCtl UserController) List(c *gin.Context) {
 	userModel := new(models.Users)
 	var req request.GetListRequest
 
-	// kiểm tra đầu vào
-	// gán các tham số truy vấn từ yêu cầu HTTP vào biến reg sử dụng biding.query để chỉ định kiểu
 	err := c.ShouldBindWith(&req, binding.Query)
-	if err != nil { // nếu có lỗi trong quá trình gán, trả về phản hồi http với mã trạng thái lỗi missing params
+	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
 	}
-	cond := bson.M{}         // khởi tạo một bản đồ "cond" để chứa các điều kiện truy vấn cho cơ sở dữ liệu
-	if req.Username != nil { // nếu trường user name khác rỗng
-		cond["username"] = req.Username // lấy username theo username
+	cond := bson.M{}
+	if req.Username != nil {
+		cond["username"] = req.Username
 	}
 
-	if req.IsActive != nil { // tương tự
+	if req.IsActive != nil {
 		cond["is_active"] = req.IsActive
 	}
 
-	optionsQuery, page, limit := models.GetPagingOption(req.Page, req.Limit, req.Sort) // lấy các tùy chọn phân trang từ yêu cầu, là hàm hỗ trợ lấy các giá trị này
-	var respData []request.ListResponse                                                //khởi tạo một slice tên là respData để chứa các phản hồi của danh sách người dùng
-	users, err := userModel.Pagination(c, cond, optionsQuery)                          // gọi phương thức Pagination của mô hình users để lấy danh sách người dùng dựa trewen các điều kiện
-	for _, user := range users {                                                       //duyệt qua từng người dùng trong danh sach users
-
-		res := request.ListResponse{ // danh sách người dùng được trả về
+	optionsQuery, page, limit := models.GetPagingOption(req.Page, req.Limit, req.Sort)
+	var respData []request.ListResponse
+	users, err := userModel.Pagination(c, cond, optionsQuery)
+	for _, user := range users {
+		res := request.ListResponse{
 			Uuid:       user.Uuid,
 			ClientUuid: user.ClientUuid,
 			Name:       user.Name,
@@ -79,9 +77,9 @@ func (userCtl UserController) List(c *gin.Context) {
 
 func (userCtl UserController) Detail(c *gin.Context) {
 	userModel := new(models.Users)
-	var reqUri request.GetDetailUri //khai báo một biến dẫn đến hàm request/user
-	// Validation input
-	err := c.ShouldBindUri(&reqUri) // hàm dùng để tìm đến đường dẫn uri
+	var reqUri request.GetDetailUri
+
+	err := c.ShouldBindUri(&reqUri)
 	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
@@ -106,18 +104,17 @@ func (userCtl UserController) Detail(c *gin.Context) {
 	c.JSON(http.StatusOK, respond.Success(response, "Successfully"))
 }
 
-// khởi tạo
 func (userCtl UserController) Update(c *gin.Context) {
-	userModel := new(models.Users) // tạo một model mới
-	var reqUri request.UpdateUri   //tạo biến đưa tới hàm updateuri ở model
-	// kiểm tra đầu vào
-	err := c.ShouldBindUri(&reqUri) //dùng framwork của gin dẫn đến cái đường dẫn Uri
-	if err != nil {                 //câu điều kiện kiểm tra xem việc ràng buộc dữ liệu từ phần đường dẫn có thành công hay không
+	userModel := new(models.Users)
+	var reqUri request.UpdateUri
+
+	err := c.ShouldBindUri(&reqUri)
+	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
 	}
-	var req request.UpdateRequest // câu điều kiện kiểm tra việc ràng buộc dữ liệu file json có thành công hay không
+	var req request.UpdateRequest
 	err = c.ShouldBindJSON(&req)
 	if err != nil {
 		_ = c.Error(err)
@@ -125,8 +122,8 @@ func (userCtl UserController) Update(c *gin.Context) {
 		return
 	}
 
-	condition := bson.M{"uuid": reqUri.Uuid}  // kiểm tra đường dẫn đến uuid
-	user, err := userModel.FindOne(condition) // tìm đến uuid
+	condition := bson.M{"uuid": reqUri.Uuid}
+	user, err := userModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, respond.ErrorCommon("User no found!"))
@@ -280,4 +277,71 @@ func (userCtl UserController) Login(c *gin.Context) {
 	}
 	//return response
 	c.JSON(http.StatusOK, respond.Success(request.LoginResponse{Token: token}, "login successfully"))
+}
+
+func (userCtl UserController) LoginAdmin(c *gin.Context) {
+	adminModel := models.AdminSignUp{}
+
+	var req request.LoginRequestAdmin
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusBadRequest, respond.MissingParams())
+		return
+	}
+
+	condition := bson.M{"username": req.UserName}
+	admin, err := adminModel.FindOne(condition)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusOK, respond.ErrorCommon("user not found"))
+		return
+	}
+	cond := bson.M{"password": req.Password}
+	_, err = adminModel.FindOne(cond)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusOK, respond.ErrorCommon("user not found"))
+		return
+	}
+	token, err := util.GenerateJWT(admin.Username)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("found"))
+		return
+	}
+	adminLogin := models.AdminLogin{}
+	adminLogin.AdminUuid = admin.Uuid
+	adminLogin.Uuid = util.GenerateUUID()
+	adminLogin.Token = token
+
+	_, err = adminLogin.Insert()
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusOK, respond.UpdatedFail())
+		return
+	}
+	c.JSON(http.StatusOK, respond.Success(request.LoginResponseAdmin{Token: token}, "login successfully"))
+}
+func (userCtl UserController) SignUpAdmin(c *gin.Context) {
+
+	var req request.SignUpRequestAdmin
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusBadRequest, respond.MissingParams())
+		return
+	}
+	adminSignup := models.AdminSignUp{}
+	adminSignup.IsActive = 1
+	adminSignup.Uuid = util.GenerateUUID()
+	adminSignup.Username = req.UserName
+	adminSignup.Password = req.Password
+	_, err = adminSignup.Insert()
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusOK, respond.UpdatedFail())
+		return
+	}
+	c.JSON(http.StatusOK, respond.Success(adminSignup.Username, "sign up successfully"))
 }

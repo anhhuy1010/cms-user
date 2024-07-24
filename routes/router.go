@@ -14,7 +14,7 @@ import (
 
 func RouteInit(engine *gin.Engine) {
 	userCtr := new(controllers.UserController)
-	accountCtr := new(controllers.AccountController)
+	customerCtr := new(controllers.CustomerController)
 
 	engine.GET("/", func(c *gin.Context) {
 		c.String(http.StatusOK, "Auth Service API")
@@ -39,8 +39,10 @@ func RouteInit(engine *gin.Engine) {
 		apiV1.DELETE("/users/:uuid", userCtr.Delete)
 		apiV1.POST("/users/login", userCtr.Login)
 
-		apiV1.POST("/account/login/customer", accountCtr.LoginCustomer)
-		apiV1.POST("/account/signup", accountCtr.SignUp)
+		apiV1.POST("/customer/login", customerCtr.LoginCustomer)
+		apiV1.POST("/customer/signup", customerCtr.SignUpCustomer)
+		// apiV1.POST("/account/login/admin", customerCtr.LoginAdmin)
+		// apiV1.POST("/account/signup/admin", customerCtr.SignUpAdmin)
 
 	}
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))

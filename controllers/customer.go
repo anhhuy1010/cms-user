@@ -7,18 +7,19 @@ import (
 	"github.com/anhhuy1010/cms-user/helpers/respond"
 	"github.com/anhhuy1010/cms-user/helpers/util"
 	"github.com/anhhuy1010/cms-user/models"
-	request "github.com/anhhuy1010/cms-user/request/account"
+
+	request "github.com/anhhuy1010/cms-user/request/customer"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-type AccountController struct {
+type CustomerController struct {
 }
 
-func (userCtl AccountController) LoginCustomer(c *gin.Context) {
+func (customerCtl CustomerController) LoginCustomer(c *gin.Context) {
 	customerModel := models.CustomersSignUp{}
 
-	var req request.LoginRequestUser
+	var req request.LoginRequestCustomer
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		_ = c.Error(err)
@@ -30,11 +31,14 @@ func (userCtl AccountController) LoginCustomer(c *gin.Context) {
 	customer, err := customerModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("user not found"))
+		c.JSON(http.StatusOK, respond.ErrorCommon("customer not found"))
 		return
 	}
-	if customer.Password != req.Password {
-		c.JSON(http.StatusBadRequest, respond.ErrorCommon("password not found"))
+	cond := bson.M{"password": req.Password}
+	_, err = customerModel.FindOne(cond)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusOK, respond.ErrorCommon("customer not found"))
 		return
 	}
 
@@ -55,35 +59,35 @@ func (userCtl AccountController) LoginCustomer(c *gin.Context) {
 		c.JSON(http.StatusOK, respond.UpdatedFail())
 		return
 	}
-	c.JSON(http.StatusOK, respond.Success(request.LoginResponseUser{Token: token}, "login successfully"))
+	c.JSON(http.StatusOK, respond.Success(request.LoginResponseCustomer{Token: token}, "login successfully"))
 }
-func (userCtl AccountController) SignUp(c *gin.Context) {
+func (customerCtl CustomerController) SignUpCustomer(c *gin.Context) {
 
-	var req request.SignUpRequest
+	var req request.SignUpRequestCustomer
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
 	}
-	customerData := models.CustomersSignUp{}
-	customerData.IsActive = 1
-	customerData.Uuid = util.GenerateUUID()
-	customerData.Username = req.UserName
-	customerData.Name = req.Name
-	customerData.Email = req.Email
-	customerData.Age = req.Age
-	customerData.Password = req.Password
+	customerSignup := models.CustomersSignUp{}
+	customerSignup.IsActive = 1
+	customerSignup.Uuid = util.GenerateUUID()
+	customerSignup.Username = req.UserName
+	customerSignup.Name = req.Name
+	customerSignup.Email = req.Email
+	customerSignup.Age = req.Age
+	customerSignup.Password = req.Password
 	check := req.CheckPass
-	if check != customerData.Password {
+	if check != customerSignup.Password {
 		c.JSON(http.StatusBadRequest, respond.ErrorCommon("Passwords are inconsistent"))
 		return
 	}
-	_, err = customerData.Insert()
+	_, err = customerSignup.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, respond.UpdatedFail())
 		return
 	}
-	c.JSON(http.StatusOK, respond.Success(customerData.Username, "sign up successfully"))
+	c.JSON(http.StatusOK, respond.Success(customerSignup.Username, "sign up successfully"))
 }

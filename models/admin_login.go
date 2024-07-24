@@ -13,20 +13,20 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type CustomersLogin struct {
-	CustomerUuid string    `json:"customer_uuid" bson:"customer_uuid"`
-	Uuid         string    `json:"uuid" bson:"uuid"`
-	CreatedAt    time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at" bson:"updated_at"`
-	Token        string    `json:"token"`
+type AdminLogin struct {
+	AdminUuid string    `json:"customer_uuid" bson:"customer_uuid"`
+	Uuid      string    `json:"uuid" bson:"uuid"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+	Token     string    `json:"token"`
 }
 
-func (u *CustomersLogin) Model() *mongo.Collection {
+func (u *AdminLogin) Model() *mongo.Collection {
 	db := database.GetInstance()
-	return db.Collection("customersLogin")
+	return db.Collection("adminLogin")
 }
 
-func (u *CustomersLogin) Find(conditions map[string]interface{}, opts ...*options.FindOptions) ([]*CustomersLogin, error) {
+func (u *AdminLogin) Find(conditions map[string]interface{}, opts ...*options.FindOptions) ([]*AdminLogin, error) {
 	coll := u.Model()
 
 	conditions["is_delete"] = constant.UNDELETE
@@ -35,15 +35,15 @@ func (u *CustomersLogin) Find(conditions map[string]interface{}, opts ...*option
 		return nil, err
 	}
 
-	var customersLogin []*CustomersLogin
+	var adminLogin []*AdminLogin
 	for cursor.Next(context.TODO()) {
-		var elem CustomersLogin
+		var elem AdminLogin
 		err := cursor.Decode(&elem)
 		if err != nil {
 			return nil, err
 		}
 
-		customersLogin = append(customersLogin, &elem)
+		adminLogin = append(adminLogin, &elem)
 	}
 
 	if err := cursor.Err(); err != nil {
@@ -51,10 +51,10 @@ func (u *CustomersLogin) Find(conditions map[string]interface{}, opts ...*option
 	}
 	_ = cursor.Close(context.TODO())
 
-	return customersLogin, nil
+	return adminLogin, nil
 }
 
-func (u *CustomersLogin) Pagination(ctx context.Context, conditions map[string]interface{}, modelOptions ...ModelOption) ([]*CustomersLogin, error) {
+func (u *AdminLogin) Pagination(ctx context.Context, conditions map[string]interface{}, modelOptions ...ModelOption) ([]*AdminLogin, error) {
 	coll := u.Model()
 
 	conditions["is_delete"] = constant.UNDELETE
@@ -66,9 +66,9 @@ func (u *CustomersLogin) Pagination(ctx context.Context, conditions map[string]i
 		return nil, err
 	}
 
-	var customersLogin []*CustomersLogin
+	var adminLogin []*AdminLogin
 	for cursor.Next(context.TODO()) {
-		var elem CustomersLogin
+		var elem AdminLogin
 		err := cursor.Decode(&elem)
 		if err != nil {
 			log.Println("[Decode] PopularCuisine:", err)
@@ -76,7 +76,7 @@ func (u *CustomersLogin) Pagination(ctx context.Context, conditions map[string]i
 			continue
 		}
 
-		customersLogin = append(customersLogin, &elem)
+		adminLogin = append(adminLogin, &elem)
 	}
 
 	if err := cursor.Err(); err != nil {
@@ -84,10 +84,10 @@ func (u *CustomersLogin) Pagination(ctx context.Context, conditions map[string]i
 	}
 	_ = cursor.Close(context.TODO())
 
-	return customersLogin, nil
+	return adminLogin, nil
 }
 
-func (u *CustomersLogin) FindOne(conditions map[string]interface{}) (*CustomersLogin, error) {
+func (u *AdminLogin) FindOne(conditions map[string]interface{}) (*AdminLogin, error) {
 	coll := u.Model()
 
 	conditions["is_delete"] = constant.UNDELETE
@@ -99,7 +99,7 @@ func (u *CustomersLogin) FindOne(conditions map[string]interface{}) (*CustomersL
 	return u, nil
 }
 
-func (u *CustomersLogin) Insert() (interface{}, error) {
+func (u *AdminLogin) Insert() (interface{}, error) {
 	coll := u.Model()
 
 	resp, err := coll.InsertOne(context.TODO(), u)
