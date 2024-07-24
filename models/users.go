@@ -16,19 +16,19 @@ import (
 )
 
 type Users struct {
-	ClientUuid string    `json:"client_uuid,omitempty" bson:"client_uuid"`
-	Uuid       string    `json:"uuid,omitempty" bson:"uuid"`
-	Name       string    `json:"name,omitempty" bson:"name"`
-	Password   string    `json:"password,omitempty" bson:"password"`
-	Email      string    `json:"email,omitempty" bson:"email"`
-	Username   string    `json:"username,omitempty" bson:"username"`
-	IsActive   int       `json:"is_active" bson:"is_active"`
-	IsDelete   int       `json:"is_delete" bson:"is_delete"`
-	CreatedAt  time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at" bson:"updated_at"`
-	CreatedBy  *string   `json:"created_by" bson:"created_by"`
-	UpdatedBy  *string   `json:"updated_by" bson:"updated_by"`
-	Token      string    `json:"token"`
+	UserUuid  string    `json:"user_uuid,omitempty" bson:"user_uuid"`
+	Uuid      string    `json:"uuid,omitempty" bson:"uuid"`
+	Name      string    `json:"name,omitempty" bson:"name"`
+	Password  string    `json:"password,omitempty" bson:"password"`
+	Email     string    `json:"email,omitempty" bson:"email"`
+	Username  string    `json:"username,omitempty" bson:"username"`
+	IsActive  int       `json:"is_active" bson:"is_active"`
+	IsDelete  int       `json:"is_delete" bson:"is_delete"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+	CreatedBy *string   `json:"created_by" bson:"created_by"`
+	UpdatedBy *string   `json:"updated_by" bson:"updated_by"`
+	Token     string    `json:"token"`
 }
 
 func (u *Users) Model() *mongo.Collection {

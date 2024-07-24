@@ -62,11 +62,10 @@ func (userCtl UserController) List(c *gin.Context) {
 	users, err := userModel.Pagination(c, cond, optionsQuery)
 	for _, user := range users {
 		res := request.ListResponse{
-			Uuid:       user.Uuid,
-			ClientUuid: user.ClientUuid,
-			Name:       user.Name,
-			UserName:   user.Username,
-			IsActive:   user.IsActive,
+			Uuid:     user.Uuid,
+			Name:     user.Name,
+			UserName: user.Username,
+			IsActive: user.IsActive,
 		}
 		respData = append(respData, res)
 	}
@@ -280,7 +279,7 @@ func (userCtl UserController) Login(c *gin.Context) {
 }
 
 func (userCtl UserController) LoginAdmin(c *gin.Context) {
-	adminModel := models.AdminSignUp{}
+	adminModel := models.Users{}
 
 	var req request.LoginRequestAdmin
 	err := c.ShouldBindJSON(&req)
@@ -310,8 +309,8 @@ func (userCtl UserController) LoginAdmin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, respond.ErrorCommon("found"))
 		return
 	}
-	adminLogin := models.AdminLogin{}
-	adminLogin.AdminUuid = admin.Uuid
+	adminLogin := models.Users{}
+	adminLogin.UserUuid = admin.Uuid
 	adminLogin.Uuid = util.GenerateUUID()
 	adminLogin.Token = token
 
@@ -332,7 +331,7 @@ func (userCtl UserController) SignUpAdmin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
 	}
-	adminSignup := models.AdminSignUp{}
+	adminSignup := models.Users{}
 	adminSignup.IsActive = 1
 	adminSignup.Uuid = util.GenerateUUID()
 	adminSignup.Username = req.UserName
