@@ -44,7 +44,7 @@ func Init() (*mongo.Database, error) {
 	}
 
 	return db, nil
-}
+}   
 
 func GetInstance() *mongo.Database {
 	return db

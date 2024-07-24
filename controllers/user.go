@@ -30,13 +30,21 @@ type UserController struct {
 // @Router /users [get]
 
 // khởi tạo
+type (
+	GetListResponse struct {
+		Uuid string `json:"uuid"`
+		Task string `json:"task"`
+	}
+)
+
 func (userCtl UserController) List(c *gin.Context) {
 	userModel := new(models.Users)
 	var req request.GetListRequest
 
 	// kiểm tra đầu vào
-	err := c.ShouldBindWith(&req, binding.Query) // gán các tham số truy vấn từ yêu cầu HTTP vào biến reg sử dụng biding.query để chỉ định kiểu
-	if err != nil {                              // nếu có lỗi trong quá trình gán, trả về phản hồi http với mã trạng thái lỗi missing params
+	// gán các tham số truy vấn từ yêu cầu HTTP vào biến reg sử dụng biding.query để chỉ định kiểu
+	err := c.ShouldBindWith(&req, binding.Query)
+	if err != nil { // nếu có lỗi trong quá trình gán, trả về phản hồi http với mã trạng thái lỗi missing params
 		_ = c.Error(err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
