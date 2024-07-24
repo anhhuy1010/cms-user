@@ -15,38 +15,6 @@ import (
 type AccountController struct {
 }
 
-func (userCtl AccountController) LoginAdmin(c *gin.Context) {
-	adminModel := models.Admins{}
-	var req request.LoginRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		_ = c.Error(err)
-		c.JSON(http.StatusBadRequest, respond.MissingParams())
-		return
-	}
-
-	condition := bson.M{"username": req.UserName}
-	admin, err := adminModel.FindOne(condition)
-	if err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("user not found"))
-		return
-	}
-
-	if admin.Password != req.Password {
-		c.JSON(http.StatusBadRequest, respond.ErrorCommon("password not found"))
-		return
-	}
-
-	token, err := util.GenerateJWT(admin.Username)
-	if err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, respond.ErrorCommon("found"))
-		return
-	}
-
-	c.JSON(http.StatusOK, respond.Success(request.LoginResponse{Token: token}, "login successfully"))
-}
 func (userCtl AccountController) LoginCustomer(c *gin.Context) {
 	customerModel := models.CustomersSignUp{}
 
@@ -87,7 +55,7 @@ func (userCtl AccountController) LoginCustomer(c *gin.Context) {
 		c.JSON(http.StatusOK, respond.UpdatedFail())
 		return
 	}
-	c.JSON(http.StatusOK, respond.Success(request.LoginResponse{Token: token}, "login successfully"))
+	c.JSON(http.StatusOK, respond.Success(request.LoginResponseUser{Token: token}, "login successfully"))
 }
 func (userCtl AccountController) SignUp(c *gin.Context) {
 
