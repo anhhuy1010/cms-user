@@ -14,8 +14,10 @@ database:
   port: 80
   username: anhhuy
   password: "%40nhHuy1010"
-  db_name: menu
+  db_name: user
   ssl: true
 
+auth:
+  key: 1q2w3e4r5t
 grpc:
 

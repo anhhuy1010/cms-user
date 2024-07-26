@@ -10,6 +10,8 @@ import (
 	"github.com/anhhuy1010/cms-user/helpers/util"
 	"github.com/anhhuy1010/cms-user/models"
 	request "github.com/anhhuy1010/cms-user/request/user"
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"go.mongodb.org/mongo-driver/bson"
@@ -30,37 +32,34 @@ type UserController struct {
 // @Router /users [get]
 
 // khởi tạo
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) List(c *gin.Context) {
 	userModel := new(models.Users)
 	var req request.GetListRequest
 
-	// kiểm tra đầu vào
-	err := c.ShouldBindWith(&req, binding.Query) // gán các tham số truy vấn từ yêu cầu HTTP vào biến reg sử dụng biding.query để chỉ định kiểu
-	if err != nil {                              // nếu có lỗi trong quá trình gán, trả về phản hồi http với mã trạng thái lỗi missing params
+	err := c.ShouldBindWith(&req, binding.Query)
+	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
 	}
-	cond := bson.M{}         // khởi tạo một bản đồ "cond" để chứa các điều kiện truy vấn cho cơ sở dữ liệu
-	if req.Username != nil { // nếu trường user name khác rỗng
-		cond["username"] = req.Username // lấy username theo username
+	cond := bson.M{}
+	if req.Username != nil {
+		cond["username"] = req.Username
 	}
 
-	if req.IsActive != nil { // tương tự
+	if req.IsActive != nil {
 		cond["is_active"] = req.IsActive
 	}
 
-	optionsQuery, page, limit := models.GetPagingOption(req.Page, req.Limit, req.Sort) // lấy các tùy chọn phân trang từ yêu cầu, là hàm hỗ trợ lấy các giá trị này
-	var respData []request.ListResponse                                                //khởi tạo một slice tên là respData để chứa các phản hồi của danh sách người dùng
-	users, err := userModel.Pagination(c, cond, optionsQuery)                          // gọi phương thức Pagination của mô hình users để lấy danh sách người dùng dựa trewen các điều kiện
-	for _, user := range users {                                                       //duyệt qua từng người dùng trong danh sach users
-
-		res := request.ListResponse{ // danh sách người dùng được trả về
-			Uuid:       user.Uuid,
-			ClientUuid: user.ClientUuid,
-			Name:       user.Name,
-			UserName:   user.Username,
-			IsActive:   user.IsActive,
+	optionsQuery, page, limit := models.GetPagingOption(req.Page, req.Limit, req.Sort)
+	var respData []request.ListResponse
+	users, err := userModel.Pagination(c, cond, optionsQuery)
+	for _, user := range users {
+		res := request.ListResponse{
+			Uuid:     user.Uuid,
+			UserName: user.Username,
+			IsActive: user.IsActive,
 		}
 		respData = append(respData, res)
 	}
@@ -69,11 +68,12 @@ func (userCtl UserController) List(c *gin.Context) {
 	c.JSON(http.StatusOK, respond.SuccessPagination(respData, page, limit, pages, total))
 }
 
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Detail(c *gin.Context) {
 	userModel := new(models.Users)
-	var reqUri request.GetDetailUri //khai báo một biến dẫn đến hàm request/user
-	// Validation input
-	err := c.ShouldBindUri(&reqUri) // hàm dùng để tìm đến đường dẫn uri
+	var reqUri request.GetDetailUri
+
+	err := c.ShouldBindUri(&reqUri)
 	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
@@ -84,32 +84,31 @@ func (userCtl UserController) Detail(c *gin.Context) {
 	user, err := userModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("User no found!"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("User no found!"))
 		return
 	}
 
 	response := request.GetDetailResponse{
 		Uuid:     user.Uuid,
 		UserName: user.Username,
-		Name:     user.Name,
 		Email:    user.Email,
 	}
 
 	c.JSON(http.StatusOK, respond.Success(response, "Successfully"))
 }
 
-// khởi tạo
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Update(c *gin.Context) {
-	userModel := new(models.Users) // tạo một model mới
-	var reqUri request.UpdateUri   //tạo biến đưa tới hàm updateuri ở model
-	// kiểm tra đầu vào
-	err := c.ShouldBindUri(&reqUri) //dùng framwork của gin dẫn đến cái đường dẫn Uri
-	if err != nil {                 //câu điều kiện kiểm tra xem việc ràng buộc dữ liệu từ phần đường dẫn có thành công hay không
+	userModel := new(models.Users)
+	var reqUri request.UpdateUri
+
+	err := c.ShouldBindUri(&reqUri)
+	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
 	}
-	var req request.UpdateRequest // câu điều kiện kiểm tra việc ràng buộc dữ liệu file json có thành công hay không
+	var req request.UpdateRequest
 	err = c.ShouldBindJSON(&req)
 	if err != nil {
 		_ = c.Error(err)
@@ -117,20 +116,18 @@ func (userCtl UserController) Update(c *gin.Context) {
 		return
 	}
 
-	condition := bson.M{"uuid": reqUri.Uuid}  // kiểm tra đường dẫn đến uuid
-	user, err := userModel.FindOne(condition) // tìm đến uuid
+	condition := bson.M{"uuid": reqUri.Uuid}
+	user, err := userModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("User no found!"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("User no found!"))
 		return
 	}
 
 	if req.Email != "" {
 		user.Email = req.Email
 	}
-	if req.Name != "" {
-		user.Name = req.Name
-	}
+
 	if req.UserName != "" {
 		user.Username = req.UserName
 	}
@@ -144,6 +141,7 @@ func (userCtl UserController) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, respond.Success(user.Uuid, "update successfully"))
 }
 
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Delete(c *gin.Context) {
 	userModel := new(models.Users)
 	var reqUri request.DeleteUri
@@ -159,7 +157,7 @@ func (userCtl UserController) Delete(c *gin.Context) {
 	user, err := userModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("User no found!"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("User no found!"))
 		return
 	}
 
@@ -168,12 +166,13 @@ func (userCtl UserController) Delete(c *gin.Context) {
 	_, err = user.Update()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.UpdatedFail())
+		c.JSON(http.StatusBadRequest, respond.UpdatedFail())
 		return
 	}
 	c.JSON(http.StatusOK, respond.Success(user.Uuid, "Delete successfully"))
 }
 
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) UpdateStatus(c *gin.Context) {
 	userModel := new(models.Users)
 	var reqUri request.UpdateStatusUri
@@ -201,7 +200,7 @@ func (userCtl UserController) UpdateStatus(c *gin.Context) {
 	user, err := userModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("User no found!"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("User no found!"))
 		return
 	}
 
@@ -210,20 +209,14 @@ func (userCtl UserController) UpdateStatus(c *gin.Context) {
 	_, err = user.Update()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.UpdatedFail())
+		c.JSON(http.StatusBadRequest, respond.UpdatedFail())
 		return
 	}
 	c.JSON(http.StatusOK, respond.Success(user.Uuid, "update successfully"))
 }
-func (userCtl UserController) Create(c *gin.Context) { // tạo một user mới
-	// var reqI request.GetInsertRequest
-	// // kiểm tra đầu vào
-	// err := c.ShouldBindWith(&reqI, binding.Query)
-	// if err != nil {
-	// 	_ = c.Error(err)
-	// 	c.JSON(http.StatusBadRequest, respond.MissingParams())
-	// 	return
-	// }
+
+// //////////////////////////////////////////////////////////////////////////
+func (userCtl UserController) Create(c *gin.Context) {
 	var req request.GetInsertRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -235,12 +228,90 @@ func (userCtl UserController) Create(c *gin.Context) { // tạo một user mới
 	userData.Uuid = util.GenerateUUID()
 	userData.Username = req.UserName
 	userData.Uuid = req.Uuid
-	userData.Name = req.Name
 	_, err = userData.Insert()
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.UpdatedFail())
+		return
+	}
+	c.JSON(http.StatusOK, respond.Success(userData.Uuid, "update successfully"))
+}
+
+// ////////////////////////////////////////////////////
+func (userCtl UserController) Login(c *gin.Context) {
+	adminModel := models.Users{}
+
+	var req request.LoginRequestAdmin
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusBadRequest, respond.MissingParams())
+		return
+	}
+
+	condition := bson.M{"username": req.UserName}
+	admin, err := adminModel.FindOne(condition)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("user not found"))
+		return
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(req.Password))
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("invalid password"))
+		return
+	}
+	token, err := util.GenerateJWT(admin.Username)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("found"))
+		return
+	}
+	adminLogin := models.Tokens{}
+	adminLogin.UserUuid = admin.Uuid
+	adminLogin.Uuid = util.GenerateUUID()
+	adminLogin.Token = token
+	_, err = adminLogin.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, respond.UpdatedFail())
 		return
 	}
-	c.JSON(http.StatusOK, respond.Success(userData.Uuid, "update successfully"))
+	c.JSON(http.StatusOK, respond.Success(request.LoginResponseAdmin{Token: token}, "login successfully"))
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+func (userCtl UserController) SignUp(c *gin.Context) {
+	var req request.SignUpRequestAdmin
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusBadRequest, respond.MissingParams())
+		return
+	}
+	adminSignup := models.Users{}
+	adminSignup.IsActive = 1
+	adminSignup.Uuid = util.GenerateUUID()
+	adminSignup.Username = req.UserName
+	adminSignup.Password = req.Password
+	adminSignup.Email = req.Email
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminSignup.Password), bcrypt.DefaultCost)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("invalid password"))
+		return
+	}
+	adminSignup.Password = string(hashedPassword)
+
+	_, err = adminSignup.Insert()
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusOK, respond.UpdatedFail())
+		return
+	}
+
+	c.JSON(http.StatusOK, respond.Success(adminSignup.Username, "sign up successfully"))
 }
