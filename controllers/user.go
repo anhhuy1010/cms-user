@@ -32,13 +32,7 @@ type UserController struct {
 // @Router /users [get]
 
 // khởi tạo
-type (
-	GetListResponse struct {
-		Uuid string `json:"uuid"`
-		Task string `json:"task"`
-	}
-)
-
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) List(c *gin.Context) {
 	userModel := new(models.Users)
 	var req request.GetListRequest
@@ -74,6 +68,7 @@ func (userCtl UserController) List(c *gin.Context) {
 	c.JSON(http.StatusOK, respond.SuccessPagination(respData, page, limit, pages, total))
 }
 
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Detail(c *gin.Context) {
 	userModel := new(models.Users)
 	var reqUri request.GetDetailUri
@@ -89,7 +84,7 @@ func (userCtl UserController) Detail(c *gin.Context) {
 	user, err := userModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("User no found!"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("User no found!"))
 		return
 	}
 
@@ -102,6 +97,7 @@ func (userCtl UserController) Detail(c *gin.Context) {
 	c.JSON(http.StatusOK, respond.Success(response, "Successfully"))
 }
 
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Update(c *gin.Context) {
 	userModel := new(models.Users)
 	var reqUri request.UpdateUri
@@ -124,7 +120,7 @@ func (userCtl UserController) Update(c *gin.Context) {
 	user, err := userModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("User no found!"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("User no found!"))
 		return
 	}
 
@@ -145,6 +141,7 @@ func (userCtl UserController) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, respond.Success(user.Uuid, "update successfully"))
 }
 
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Delete(c *gin.Context) {
 	userModel := new(models.Users)
 	var reqUri request.DeleteUri
@@ -160,7 +157,7 @@ func (userCtl UserController) Delete(c *gin.Context) {
 	user, err := userModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("User no found!"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("User no found!"))
 		return
 	}
 
@@ -169,12 +166,13 @@ func (userCtl UserController) Delete(c *gin.Context) {
 	_, err = user.Update()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.UpdatedFail())
+		c.JSON(http.StatusBadRequest, respond.UpdatedFail())
 		return
 	}
 	c.JSON(http.StatusOK, respond.Success(user.Uuid, "Delete successfully"))
 }
 
+// //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) UpdateStatus(c *gin.Context) {
 	userModel := new(models.Users)
 	var reqUri request.UpdateStatusUri
@@ -202,7 +200,7 @@ func (userCtl UserController) UpdateStatus(c *gin.Context) {
 	user, err := userModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("User no found!"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("User no found!"))
 		return
 	}
 
@@ -211,13 +209,14 @@ func (userCtl UserController) UpdateStatus(c *gin.Context) {
 	_, err = user.Update()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.UpdatedFail())
+		c.JSON(http.StatusBadRequest, respond.UpdatedFail())
 		return
 	}
 	c.JSON(http.StatusOK, respond.Success(user.Uuid, "update successfully"))
 }
-func (userCtl UserController) Create(c *gin.Context) {
 
+// //////////////////////////////////////////////////////////////////////////
+func (userCtl UserController) Create(c *gin.Context) {
 	var req request.GetInsertRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -232,7 +231,7 @@ func (userCtl UserController) Create(c *gin.Context) {
 	_, err = userData.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.UpdatedFail())
+		c.JSON(http.StatusBadRequest, respond.UpdatedFail())
 		return
 	}
 	c.JSON(http.StatusOK, respond.Success(userData.Uuid, "update successfully"))

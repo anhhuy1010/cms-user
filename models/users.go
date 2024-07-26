@@ -23,6 +23,7 @@ type Users struct {
 	Username  string    `json:"username,omitempty" bson:"username"`
 	IsActive  int       `json:"is_active" bson:"is_active"`
 	IsDelete  int       `json:"is_delete" bson:"is_delete"`
+	Role      string    `json:"role" bson:"role"`
 	CreatedAt time.Time `json:"created_at" bson:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
 	CreatedBy *string   `json:"created_by" bson:"created_by"`

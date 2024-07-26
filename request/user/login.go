@@ -1,11 +1,11 @@
 package user
 
 type (
-	LoginRequest struct {
-		UserName string `json:"username" binding:"required"`
-		Password string `json:"password" biding:"required"`
+	LoginRequestAdmin struct {
+		UserName string `json:"username"  binding:"required"`
+		Password string `json:"password" bson:"password" biding:"required"`
 	}
-	LoginResponse struct {
+	LoginResponseAdmin struct {
 		Token string `json:"token"`
 	}
 )
