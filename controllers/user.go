@@ -239,7 +239,7 @@ func (userCtl UserController) Create(c *gin.Context) {
 }
 
 // ////////////////////////////////////////////////////
-func (userCtl UserController) LoginAdmin(c *gin.Context) {
+func (userCtl UserController) Login(c *gin.Context) {
 	adminModel := models.Users{}
 
 	var req request.LoginRequestAdmin
@@ -284,7 +284,7 @@ func (userCtl UserController) LoginAdmin(c *gin.Context) {
 
 ////////////////////////////////////////////////////////////////////////////
 
-func (userCtl UserController) SignUpAdmin(c *gin.Context) {
+func (userCtl UserController) SignUp(c *gin.Context) {
 	var req request.SignUpRequestAdmin
 	err := c.ShouldBindJSON(&req)
 	if err != nil {

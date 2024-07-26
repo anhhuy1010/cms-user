@@ -36,8 +36,8 @@ func RouteInit(engine *gin.Engine) {
 		apiV1.PUT("/users/:uuid", userCtr.Update)
 		apiV1.PUT("/users/:uuid/update-status", userCtr.UpdateStatus)
 		apiV1.DELETE("/users/:uuid", userCtr.Delete)
-		apiV1.POST("/users/login/admin", userCtr.LoginAdmin)
-		apiV1.POST("/users/sign/admin", userCtr.SignUpAdmin)
+		apiV1.POST("/users/login", userCtr.Login)
+		apiV1.POST("/users/sign", userCtr.SignUp)
 
 	}
 	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
