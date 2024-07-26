@@ -10,6 +10,7 @@ import (
 	"github.com/anhhuy1010/cms-user/helpers/util"
 	"github.com/anhhuy1010/cms-user/models"
 	request "github.com/anhhuy1010/cms-user/request/user"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -63,7 +64,6 @@ func (userCtl UserController) List(c *gin.Context) {
 	for _, user := range users {
 		res := request.ListResponse{
 			Uuid:     user.Uuid,
-			Name:     user.Name,
 			UserName: user.Username,
 			IsActive: user.IsActive,
 		}
@@ -96,7 +96,6 @@ func (userCtl UserController) Detail(c *gin.Context) {
 	response := request.GetDetailResponse{
 		Uuid:     user.Uuid,
 		UserName: user.Username,
-		Name:     user.Name,
 		Email:    user.Email,
 	}
 
@@ -132,9 +131,7 @@ func (userCtl UserController) Update(c *gin.Context) {
 	if req.Email != "" {
 		user.Email = req.Email
 	}
-	if req.Name != "" {
-		user.Name = req.Name
-	}
+
 	if req.UserName != "" {
 		user.Username = req.UserName
 	}
@@ -232,7 +229,6 @@ func (userCtl UserController) Create(c *gin.Context) {
 	userData.Uuid = util.GenerateUUID()
 	userData.Username = req.UserName
 	userData.Uuid = req.Uuid
-	userData.Name = req.Name
 	_, err = userData.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -242,42 +238,7 @@ func (userCtl UserController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, respond.Success(userData.Uuid, "update successfully"))
 }
 
-// resquest: username, password
-// respone: token
-func (userCtl UserController) Login(c *gin.Context) {
-	userModel := models.Users{}
-	// get data request
-	var req request.LoginRequest
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		_ = c.Error(err)
-		c.JSON(http.StatusBadRequest, respond.MissingParams())
-		return
-	}
-	// get user from database with username
-	condition := bson.M{"username": req.UserName}
-	user, err := userModel.FindOne(condition) // get user from database
-	if err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("user not found"))
-		return
-	}
-	//check password
-	if user.Password != req.Password {
-		c.JSON(http.StatusBadRequest, respond.ErrorCommon("password not found"))
-		return
-	}
-	//get token with username
-	token, err := util.GenerateJWT(user.Username)
-	if err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, respond.ErrorCommon("found"))
-		return
-	}
-	//return response
-	c.JSON(http.StatusOK, respond.Success(request.LoginResponse{Token: token}, "login successfully"))
-}
-
+// ////////////////////////////////////////////////////
 func (userCtl UserController) LoginAdmin(c *gin.Context) {
 	adminModel := models.Users{}
 
@@ -293,14 +254,13 @@ func (userCtl UserController) LoginAdmin(c *gin.Context) {
 	admin, err := adminModel.FindOne(condition)
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("user not found"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("user not found"))
 		return
 	}
-	cond := bson.M{"password": req.Password}
-	_, err = adminModel.FindOne(cond)
+	err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(req.Password))
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.ErrorCommon("user not found"))
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("invalid password"))
 		return
 	}
 	token, err := util.GenerateJWT(admin.Username)
@@ -309,11 +269,10 @@ func (userCtl UserController) LoginAdmin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, respond.ErrorCommon("found"))
 		return
 	}
-	adminLogin := models.Users{}
+	adminLogin := models.Tokens{}
 	adminLogin.UserUuid = admin.Uuid
 	adminLogin.Uuid = util.GenerateUUID()
 	adminLogin.Token = token
-
 	_, err = adminLogin.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -322,8 +281,10 @@ func (userCtl UserController) LoginAdmin(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, respond.Success(request.LoginResponseAdmin{Token: token}, "login successfully"))
 }
-func (userCtl UserController) SignUpAdmin(c *gin.Context) {
 
+////////////////////////////////////////////////////////////////////////////
+
+func (userCtl UserController) SignUpAdmin(c *gin.Context) {
 	var req request.SignUpRequestAdmin
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -336,11 +297,22 @@ func (userCtl UserController) SignUpAdmin(c *gin.Context) {
 	adminSignup.Uuid = util.GenerateUUID()
 	adminSignup.Username = req.UserName
 	adminSignup.Password = req.Password
+	adminSignup.Email = req.Email
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminSignup.Password), bcrypt.DefaultCost)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("invalid password"))
+		return
+	}
+	adminSignup.Password = string(hashedPassword)
+
 	_, err = adminSignup.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, respond.UpdatedFail())
 		return
 	}
+
 	c.JSON(http.StatusOK, respond.Success(adminSignup.Username, "sign up successfully"))
 }

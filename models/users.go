@@ -8,6 +8,7 @@ import (
 	"github.com/anhhuy1010/cms-user/database"
 	"github.com/anhhuy1010/cms-user/helpers/util"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 
 	//"go.mongodb.org/mongo-driver/bson"
 
@@ -16,10 +17,8 @@ import (
 )
 
 type Users struct {
-	UserUuid  string    `json:"user_uuid,omitempty" bson:"user_uuid"`
 	Uuid      string    `json:"uuid,omitempty" bson:"uuid"`
-	Name      string    `json:"name,omitempty" bson:"name"`
-	Password  string    `json:"password,omitempty" bson:"password"`
+	Password  string    `json:"password" bson:"password"`
 	Email     string    `json:"email,omitempty" bson:"email"`
 	Username  string    `json:"username,omitempty" bson:"username"`
 	IsActive  int       `json:"is_active" bson:"is_active"`
@@ -28,7 +27,6 @@ type Users struct {
 	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
 	CreatedBy *string   `json:"created_by" bson:"created_by"`
 	UpdatedBy *string   `json:"updated_by" bson:"updated_by"`
-	Token     string    `json:"token"`
 }
 
 func (u *Users) Model() *mongo.Collection {
@@ -194,4 +192,12 @@ func (u *Users) Count(ctx context.Context, condition map[string]interface{}) (in
 	}
 
 	return total, nil
+}
+func (u *Users) HashPassword() error {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	u.Password = string(hashedPassword)
+	return nil
 }
