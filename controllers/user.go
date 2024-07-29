@@ -55,6 +55,11 @@ func (userCtl UserController) List(c *gin.Context) {
 	optionsQuery, page, limit := models.GetPagingOption(req.Page, req.Limit, req.Sort)
 	var respData []request.ListResponse
 	users, err := userModel.Pagination(c, cond, optionsQuery)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.MissingParams())
+		return
+	}
 	for _, user := range users {
 		res := request.ListResponse{
 			Uuid:     user.Uuid,
@@ -64,6 +69,11 @@ func (userCtl UserController) List(c *gin.Context) {
 		respData = append(respData, res)
 	}
 	total, err := userModel.Count(c, cond)
+	if err != nil {
+		_ = c.Error(err)
+		c.JSON(http.StatusBadRequest, respond.MissingParams())
+		return
+	}
 	pages := int(math.Ceil(float64(total) / float64(limit)))
 	c.JSON(http.StatusOK, respond.SuccessPagination(respData, page, limit, pages, total))
 }
@@ -296,6 +306,7 @@ func (userCtl UserController) SignUp(c *gin.Context) {
 	adminSignup.Uuid = util.GenerateUUID()
 	adminSignup.Username = req.UserName
 	adminSignup.Password = req.Password
+	adminSignup.Role = req.Role
 	adminSignup.Email = req.Email
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminSignup.Password), bcrypt.DefaultCost)
@@ -313,5 +324,5 @@ func (userCtl UserController) SignUp(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, respond.Success(adminSignup.Username, "sign up successfully"))
+	c.JSON(http.StatusOK, respond.Success(adminSignup.Uuid, "sign up successfully"))
 }
