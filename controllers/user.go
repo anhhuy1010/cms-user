@@ -1,11 +1,16 @@
 package controllers
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
 
 	"github.com/anhhuy1010/cms-user/constant"
+	"github.com/anhhuy1010/cms-user/grpc"
+
+	pbUsers "github.com/anhhuy1010/cms-user/grpc/proto/users"
 	"github.com/anhhuy1010/cms-user/helpers/respond"
 	"github.com/anhhuy1010/cms-user/helpers/util"
 	"github.com/anhhuy1010/cms-user/models"
@@ -36,7 +41,7 @@ type UserController struct {
 func (userCtl UserController) List(c *gin.Context) {
 	userModel := new(models.Users)
 	var req request.GetListRequest
-
+	fmt.Println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", req)
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		_ = c.Error(err)
@@ -282,6 +287,7 @@ func (userCtl UserController) Login(c *gin.Context) {
 	adminLogin.UserUuid = admin.Uuid
 	adminLogin.Uuid = util.GenerateUUID()
 	adminLogin.Token = token
+	adminLogin.IsDelete = 0
 	_, err = adminLogin.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -325,4 +331,68 @@ func (userCtl UserController) SignUp(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, respond.Success(adminSignup.Uuid, "sign up successfully"))
+}
+
+func (userCtl UserController) CheckRole(token string) (*pbUsers.DetailResponse, error) {
+	grpcConn := grpc.GetInstance()
+	client := pbUsers.NewUserClient(grpcConn.UsersConnect)
+	req := pbUsers.DetailRequest{
+		Token: token,
+	}
+	resp, err := client.Detail(context.Background(), &req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+func (userCtl UserController) GetRoleByToken(token string) (*request.CheckRoleResponse, error) {
+	tokenModel := models.Tokens{}
+	userModel := models.Users{}
+
+	condition := bson.M{"token": token}
+	tokenDoc, err := tokenModel.FindOne(condition)
+	if err != nil {
+		return nil, errors.New("token not found")
+	}
+
+	cond := bson.M{"uuid": tokenDoc.UserUuid}
+	user, err := userModel.FindOne(cond)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	resp := &request.CheckRoleResponse{
+		UserUuid: user.Uuid,
+		Role:     user.Role,
+	}
+	return resp, nil
+}
+
+func RoleMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("x-token")
+		if token == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token required"})
+			c.Abort()
+			return
+		}
+
+		userCtl := UserController{}
+		resp, err := userCtl.GetRoleByToken(token)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+
+		c.Set("userRole", resp.Role)
+		c.Set("userUuid", resp.UserUuid)
+
+		if resp.Role != "admin" && c.Request.Method != http.MethodGet {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
 }

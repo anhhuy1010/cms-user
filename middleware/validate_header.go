@@ -21,7 +21,6 @@ func ValidateHeader() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-
 		c.Next()
 	}
 }
