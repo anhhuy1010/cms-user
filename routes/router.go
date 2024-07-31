@@ -26,13 +26,12 @@ func RouteInit(engine *gin.Engine) {
 	docs.SwaggerInfo.BasePath = "/v1"
 	apiV1 := engine.Group("/v1")
 
-	apiV1.GET("/users", userCtr.List)
-	apiV1.GET("/users/:uuid", userCtr.Detail)
-	apiV1.POST("/users/login", userCtr.Login)
-
 	apiV1.Use(controllers.RoleMiddleware())
 	apiV1.Use(middleware.RequestLog())
 	{
+		apiV1.GET("/users", userCtr.List)
+		apiV1.GET("/users/:uuid", userCtr.Detail)
+		apiV1.POST("/users/login", userCtr.Login)
 		apiV1.POST("/users", userCtr.Create)
 		apiV1.PUT("/users/:uuid", userCtr.Update)
 		apiV1.PUT("/users/:uuid/update-status", userCtr.UpdateStatus)

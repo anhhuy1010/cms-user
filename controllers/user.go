@@ -346,7 +346,7 @@ func (userCtl UserController) CheckRole(token string) (*pbUsers.DetailResponse, 
 }
 func RoleMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
+		token := c.GetHeader("x-token")
 		if token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token required"})
 			c.Abort()
@@ -361,8 +361,9 @@ func RoleMiddleware() gin.HandlerFunc {
 		}
 		c.Set("userRole", resp.Role)
 		c.Set("userUuid", resp.UserUuid)
-		if resp.Role != "admin" {
+		if resp.Role != "admin" && c.Request.Method != http.MethodGet {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			c.Abort()
 			return
 		}
 		c.Next()
