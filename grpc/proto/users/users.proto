@@ -13,6 +13,6 @@ message DetailRequest {
 }
 
 message DetailResponse {
-  string userUuid = 1;
+  string user_uuid = 1;
   string role = 2;
 }

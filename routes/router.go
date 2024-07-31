@@ -5,6 +5,7 @@ import (
 
 	"github.com/anhhuy1010/cms-user/controllers"
 
+	user "github.com/anhhuy1010/cms-user/controllers"
 	docs "github.com/anhhuy1010/cms-user/docs"
 	"github.com/anhhuy1010/cms-user/middleware"
 	"github.com/gin-gonic/gin"
@@ -26,8 +27,8 @@ func RouteInit(engine *gin.Engine) {
 	docs.SwaggerInfo.BasePath = "/v1"
 	apiV1 := engine.Group("/v1")
 
-	//apiV1.Use(middleware.ValidateHeader())
-	// apiV1.Use(middleware.VerifyAuth())
+	// Áp dụng middleware kiểm tra role cho toàn bộ nhóm API v1
+	apiV1.Use(user.RoleMiddleware())
 	apiV1.Use(middleware.RequestLog())
 	{
 		apiV1.POST("/users", userCtr.Create)
@@ -38,8 +39,7 @@ func RouteInit(engine *gin.Engine) {
 		apiV1.DELETE("/users/:uuid", userCtr.Delete)
 		apiV1.POST("/users/login", userCtr.Login)
 		apiV1.POST("/users/sign", userCtr.SignUp)
-
 	}
-	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
+	engine.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }

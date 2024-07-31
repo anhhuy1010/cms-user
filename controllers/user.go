@@ -1,11 +1,14 @@
 package controllers
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"net/http"
 
 	"github.com/anhhuy1010/cms-user/constant"
+	"github.com/anhhuy1010/cms-user/grpc"
+	pbUsers "github.com/anhhuy1010/cms-user/grpc/proto/users"
 	"github.com/anhhuy1010/cms-user/helpers/respond"
 	"github.com/anhhuy1010/cms-user/helpers/util"
 	"github.com/anhhuy1010/cms-user/models"
@@ -109,6 +112,11 @@ func (userCtl UserController) Detail(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Update(c *gin.Context) {
+	role := c.MustGet("userRole").(string)
+	if role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
+	}
 	userModel := new(models.Users)
 	var reqUri request.UpdateUri
 
@@ -153,6 +161,11 @@ func (userCtl UserController) Update(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Delete(c *gin.Context) {
+	role := c.MustGet("userRole").(string)
+	if role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
+	}
 	userModel := new(models.Users)
 	var reqUri request.DeleteUri
 	// Validation input
@@ -184,6 +197,11 @@ func (userCtl UserController) Delete(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) UpdateStatus(c *gin.Context) {
+	role := c.MustGet("userRole").(string)
+	if role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
+	}
 	userModel := new(models.Users)
 	var reqUri request.UpdateStatusUri
 	// Validation input
@@ -227,6 +245,11 @@ func (userCtl UserController) UpdateStatus(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Create(c *gin.Context) {
+	role := c.MustGet("userRole").(string)
+	if role != "admin" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+		return
+	}
 	var req request.GetInsertRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -325,4 +348,37 @@ func (userCtl UserController) SignUp(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, respond.Success(adminSignup.Uuid, "sign up successfully"))
+}
+
+func (userCtl UserController) CheckRole(token string) (*pbUsers.DetailResponse, error) {
+	grpcConn := grpc.GetInstance()
+	client := pbUsers.NewUserClient(grpcConn.UsersConnect)
+	req := pbUsers.DetailRequest{
+		Token: token,
+	}
+	resp, err := client.Detail(context.Background(), &req)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
+}
+func RoleMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.GetHeader("Authorization")
+		if token == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization token required"})
+			c.Abort()
+			return
+		}
+		userCtl := UserController{}
+		resp, err := userCtl.CheckRole(token)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
+		}
+		c.Set("userRole", resp.Role)
+		c.Set("userUuid", resp.UserUuid)
+		c.Next()
+	}
 }
