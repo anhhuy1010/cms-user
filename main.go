@@ -8,8 +8,9 @@ import (
 	"github.com/anhhuy1010/cms-user/config"
 	"github.com/anhhuy1010/cms-user/database"
 	grpcClient "github.com/anhhuy1010/cms-user/grpc"
-	pbUser "github.com/anhhuy1010/cms-user/grpc/proto/users"
 	"github.com/anhhuy1010/cms-user/grpc/service"
+
+	pbUser "github.com/anhhuy1010/cms-user/grpc/proto/users"
 	"github.com/anhhuy1010/cms-user/routes"
 	"github.com/anhhuy1010/cms-user/services/logService"
 	"github.com/gin-gonic/gin"

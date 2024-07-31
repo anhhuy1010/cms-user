@@ -5,7 +5,6 @@ import (
 
 	"github.com/anhhuy1010/cms-user/controllers"
 
-	user "github.com/anhhuy1010/cms-user/controllers"
 	docs "github.com/anhhuy1010/cms-user/docs"
 	"github.com/anhhuy1010/cms-user/middleware"
 	"github.com/gin-gonic/gin"
@@ -28,7 +27,7 @@ func RouteInit(engine *gin.Engine) {
 	apiV1 := engine.Group("/v1")
 
 	// Áp dụng middleware kiểm tra role cho toàn bộ nhóm API v1
-	apiV1.Use(user.RoleMiddleware())
+	apiV1.Use(controllers.RoleMiddleware())
 	apiV1.Use(middleware.RequestLog())
 	{
 		apiV1.POST("/users", userCtr.Create)

@@ -16,6 +16,7 @@ type Tokens struct {
 	UserUuid string `json:"user_uuid,omitempty" bson:"user_uuid"`
 	Uuid     string `json:"uuid,omitempty" bson:"uuid"`
 	Token    string `json:"token"`
+	IsDelete int    `json:"is_delete" bson:"is_delete"`
 }
 
 func (u *Tokens) Model() *mongo.Collection {

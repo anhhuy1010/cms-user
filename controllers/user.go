@@ -8,6 +8,7 @@ import (
 
 	"github.com/anhhuy1010/cms-user/constant"
 	"github.com/anhhuy1010/cms-user/grpc"
+
 	pbUsers "github.com/anhhuy1010/cms-user/grpc/proto/users"
 	"github.com/anhhuy1010/cms-user/helpers/respond"
 	"github.com/anhhuy1010/cms-user/helpers/util"
@@ -112,11 +113,6 @@ func (userCtl UserController) Detail(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Update(c *gin.Context) {
-	role := c.MustGet("userRole").(string)
-	if role != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-		return
-	}
 	userModel := new(models.Users)
 	var reqUri request.UpdateUri
 
@@ -161,11 +157,6 @@ func (userCtl UserController) Update(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Delete(c *gin.Context) {
-	role := c.MustGet("userRole").(string)
-	if role != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-		return
-	}
 	userModel := new(models.Users)
 	var reqUri request.DeleteUri
 	// Validation input
@@ -197,11 +188,6 @@ func (userCtl UserController) Delete(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) UpdateStatus(c *gin.Context) {
-	role := c.MustGet("userRole").(string)
-	if role != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-		return
-	}
 	userModel := new(models.Users)
 	var reqUri request.UpdateStatusUri
 	// Validation input
@@ -245,11 +231,6 @@ func (userCtl UserController) UpdateStatus(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Create(c *gin.Context) {
-	role := c.MustGet("userRole").(string)
-	if role != "admin" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-		return
-	}
 	var req request.GetInsertRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
@@ -305,6 +286,7 @@ func (userCtl UserController) Login(c *gin.Context) {
 	adminLogin.UserUuid = admin.Uuid
 	adminLogin.Uuid = util.GenerateUUID()
 	adminLogin.Token = token
+	adminLogin.IsDelete = 0
 	_, err = adminLogin.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -379,6 +361,10 @@ func RoleMiddleware() gin.HandlerFunc {
 		}
 		c.Set("userRole", resp.Role)
 		c.Set("userUuid", resp.UserUuid)
+		if resp.Role != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
 		c.Next()
 	}
 }
