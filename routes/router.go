@@ -15,9 +15,9 @@ import (
 func RouteInit(engine *gin.Engine) {
 	userCtr := new(controllers.UserController)
 
-	engine.GET("/", func(c *gin.Context) {
-		c.String(http.StatusOK, "Auth Service API")
-	})
+	// engine.GET("/", func(c *gin.Context) {
+	// 	c.String(http.StatusOK, "Auth Service API")
+	// })
 	engine.GET("/health", func(c *gin.Context) {
 		c.String(http.StatusOK, "OK")
 	})

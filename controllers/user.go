@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -40,7 +41,7 @@ type UserController struct {
 func (userCtl UserController) List(c *gin.Context) {
 	userModel := new(models.Users)
 	var req request.GetListRequest
-
+	fmt.Println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", req)
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		_ = c.Error(err)
@@ -344,6 +345,29 @@ func (userCtl UserController) CheckRole(token string) (*pbUsers.DetailResponse, 
 	}
 	return resp, nil
 }
+func (userCtl UserController) GetRoleByToken(token string) (*request.CheckRoleResponse, error) {
+	tokenModel := models.Tokens{}
+	userModel := models.Users{}
+
+	condition := bson.M{"token": token}
+	tokenDoc, err := tokenModel.FindOne(condition)
+	if err != nil {
+		return nil, errors.New("token not found")
+	}
+
+	cond := bson.M{"uuid": tokenDoc.UserUuid}
+	user, err := userModel.FindOne(cond)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	resp := &request.CheckRoleResponse{
+		UserUuid: user.Uuid,
+		Role:     user.Role,
+	}
+	return resp, nil
+}
+
 func RoleMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("x-token")
@@ -352,15 +376,18 @@ func RoleMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
 		userCtl := UserController{}
-		resp, err := userCtl.CheckRole(token)
+		resp, err := userCtl.GetRoleByToken(token)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			c.Abort()
 			return
 		}
+
 		c.Set("userRole", resp.Role)
 		c.Set("userUuid", resp.UserUuid)
+
 		if resp.Role != "admin" && c.Request.Method != http.MethodGet {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 			c.Abort()
