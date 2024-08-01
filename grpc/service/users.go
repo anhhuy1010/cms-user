@@ -51,26 +51,3 @@ func (s *UserService) Detail(ctx context.Context, req *user.DetailRequest) (*use
 	}
 	return res, nil
 }
-
-// func (s *UserService) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
-// 	conditions := bson.M{}
-
-// 	result, err := new(models.Users).Find(conditions)
-// 	if err != nil {
-// 		return nil, status.Error(codes.InvalidArgument, err.Error())
-// 	}
-// 	var respData []*pb.DetailResponse
-// 	for _, user := range result {
-
-// 		res := &pb.DetailResponse{
-// 			Uuid:     user.Uuid,
-// 			Username: user.Username,
-// 			IsActive: int32(user.IsActive),
-// 		}
-// 		respData = append(respData, res)
-// 	}
-
-// 	return &pb.ListResponse{
-// 		Users: respData,
-// 	}, nil
-// }

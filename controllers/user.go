@@ -252,7 +252,7 @@ func (userCtl UserController) Create(c *gin.Context) {
 	c.JSON(http.StatusOK, respond.Success(userData.Uuid, "update successfully"))
 }
 
-// ////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////
 func (userCtl UserController) Login(c *gin.Context) {
 	adminModel := models.Users{}
 
@@ -353,6 +353,9 @@ func (userCtl UserController) GetRoleByToken(token string) (*request.CheckRoleRe
 	tokenDoc, err := tokenModel.FindOne(condition)
 	if err != nil {
 		return nil, errors.New("token not found")
+	}
+	if tokenDoc == nil {
+		return nil, errors.New("token document is nil")
 	}
 
 	cond := bson.M{"uuid": tokenDoc.UserUuid}
