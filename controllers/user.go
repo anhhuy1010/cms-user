@@ -17,6 +17,8 @@ import (
 	request "github.com/anhhuy1010/cms-user/request/user"
 	"golang.org/x/crypto/bcrypt"
 
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,23 +27,10 @@ import (
 type UserController struct {
 }
 
-// List
-// @Summary Get list users test ss
-// @Schemes
-// @Description Get list users
-// @Tags users
-// @Accept json
-// @Produce json
-// @Param request query request.GetListRequest true "query params"
-// @Success 200 {object} respond.PaginationResponse
-// @Router /users [get]
-
-// khởi tạo
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) List(c *gin.Context) {
 	userModel := new(models.Users)
 	var req request.GetListRequest
-	fmt.Println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", req)
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
 		_ = c.Error(err)
@@ -55,6 +44,9 @@ func (userCtl UserController) List(c *gin.Context) {
 
 	if req.IsActive != nil {
 		cond["is_active"] = req.IsActive
+	}
+	if req.Role != nil {
+		cond["role"] = req.Role
 	}
 
 	optionsQuery, page, limit := models.GetPagingOption(req.Page, req.Limit, req.Sort)
@@ -70,6 +62,7 @@ func (userCtl UserController) List(c *gin.Context) {
 			Uuid:     user.Uuid,
 			UserName: user.Username,
 			IsActive: user.IsActive,
+			Role:     user.Role,
 		}
 		respData = append(respData, res)
 	}
@@ -105,14 +98,17 @@ func (userCtl UserController) Detail(c *gin.Context) {
 
 	response := request.GetDetailResponse{
 		Uuid:     user.Uuid,
-		UserName: user.Username,
+		Username: user.Username,
 		Email:    user.Email,
+		IsActive: user.IsActive,
+		IsDelete: user.IsDelete,
+		Role:     user.Role,
 	}
 
 	c.JSON(http.StatusOK, respond.Success(response, "Successfully"))
 }
 
-// //////////////////////////////////////////////////////////////////////////
+// ////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Update(c *gin.Context) {
 	userModel := new(models.Users)
 	var reqUri request.UpdateUri
@@ -146,11 +142,13 @@ func (userCtl UserController) Update(c *gin.Context) {
 	if req.UserName != "" {
 		user.Username = req.UserName
 	}
-
+	if req.Role != "" {
+		user.Role = req.Role
+	}
 	_, err = user.Update()
 	if err != nil {
 		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.UpdatedFail())
+		c.JSON(http.StatusBadRequest, respond.UpdatedFail())
 		return
 	}
 	c.JSON(http.StatusOK, respond.Success(user.Uuid, "update successfully"))
@@ -206,8 +204,8 @@ func (userCtl UserController) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	if *req.IsActive < 0 || *req.IsActive >= 5 {
-		c.JSON(http.StatusBadRequest, respond.ErrorCommon("Stauts just can be set in range [0..5]"))
+	if *req.IsActive < 0 || *req.IsActive > 1 {
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("Stauts just can be set in range [0..1]"))
 		return
 	}
 
@@ -241,15 +239,30 @@ func (userCtl UserController) Create(c *gin.Context) {
 	}
 	userData := models.Users{}
 	userData.Uuid = util.GenerateUUID()
-	userData.Username = req.UserName
-	userData.Uuid = req.Uuid
+	userData.Username = req.Username
+	userData.Password = req.Password
+	userData.Email = req.Email
+	userData.IsActive = 1
+	userData.Password = req.Password
+	userData.Role = "user"
+	userData.CreatedAt = time.Time{}
+	userData.UpdatedAt = time.Time{}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
+	if err != nil {
+		fmt.Println(err.Error())
+		c.JSON(http.StatusBadRequest, respond.ErrorCommon("invalid password"))
+		return
+	}
+	userData.Password = string(hashedPassword)
+
 	_, err = userData.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, respond.UpdatedFail())
 		return
 	}
-	c.JSON(http.StatusOK, respond.Success(userData.Uuid, "update successfully"))
+	c.JSON(http.StatusOK, respond.Success(userData.Uuid, "create successfully"))
 }
 
 // /////////////////////////////////////////////////////
@@ -288,6 +301,7 @@ func (userCtl UserController) Login(c *gin.Context) {
 	adminLogin.Uuid = util.GenerateUUID()
 	adminLogin.Token = token
 	adminLogin.IsDelete = 0
+
 	_, err = adminLogin.Insert()
 	if err != nil {
 		fmt.Println(err.Error())

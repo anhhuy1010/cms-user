@@ -5,8 +5,8 @@ type (
 		Uuid string `uri:"uuid"`
 	}
 	UpdateRequest struct {
-		Name     string `json:"name"`
 		UserName string `json:"username"`
 		Email    string `json:"email"`
+		Role     string `json:"role"`
 	}
 )

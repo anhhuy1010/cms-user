@@ -8,12 +8,12 @@ type (
 		Limit    int     `form:"limit"`
 		Sort     string  `form:"sort"`
 		IsActive *int    `form:"is_active" `
+		Role     *string `form:"role"`
 	}
 	ListResponse struct {
-		Uuid       string `json:"uuid" `
-		ClientUuid string `json:"client_uuid"`
-		Name       string `json:"name"`
-		UserName   string `json:"username"`
-		IsActive   int    `json:"is_active"`
+		Uuid     string `json:"uuid" `
+		UserName string `json:"username"`
+		IsActive int    `json:"is_active"`
+		Role     string `json:"role"`
 	}
 )

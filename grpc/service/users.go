@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -22,6 +23,7 @@ func NewUserServer() user.UserServer {
 
 // Detail implements user.UserServer.
 func (s *UserService) Detail(ctx context.Context, req *user.DetailRequest) (*user.DetailResponse, error) {
+	fmt.Println("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 	if req.Token == "" {
 		return nil, status.Error(codes.InvalidArgument, "Token is required")
 	}
