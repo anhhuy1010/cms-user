@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/anhhuy1010/cms-user/helpers/respond"
-	"github.com/anhhuy1010/cms-user/helpers/util"
+	"github.com/anhhuy1010/DATN-cms-customer/helpers/respond"
+	"github.com/anhhuy1010/DATN-cms-customer/helpers/util"
 )
 
 type AppHeader struct {

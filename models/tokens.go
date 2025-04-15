@@ -3,12 +3,12 @@ package models
 import (
 	"context"
 
-	"github.com/anhhuy1010/cms-user/database"
+	"github.com/anhhuy1010/DATN-cms-customer/database"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	//"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/anhhuy1010/cms-user/constant"
+	"github.com/anhhuy1010/DATN-cms-customer/constant"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 

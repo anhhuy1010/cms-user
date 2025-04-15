@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+option go_package = "../user";
+
+package customer;
+
+service CustomerService {
+  rpc ListCustomers (ListCustomerRequest) returns (ListCustomerResponse);
+}
+
+message ListCustomerRequest {
+  int32 page = 1;
+  int32 limit = 2;
+  optional string username = 3;
+  optional int32 is_active = 4;
+}
+
+message Customer {
+  string uuid = 1;
+  string username = 2;
+  int32 is_active = 3;
+}
+
+message ListCustomerResponse {
+  repeated Customer data = 1;
+}

@@ -5,9 +5,9 @@ start:
 restart:
 	docker-compose restart
 logs:
-	docker logs -f cms-user
+	docker logs -f DATN-cms-customer
 ssh-app:
-	docker exec -it cms-user bash
+	docker exec -it DATN-cms-customer bash
 swagger:
 	swag init ./controllers/*
 proto-user:
@@ -20,3 +20,8 @@ proto-users:
 		-I /usr/include \
 		--go_out=paths=source_relative,plugins=grpc:grpc/proto/users/ \
 		grpc/proto/users/users.proto
+proto-customer:
+	protoc -I grpc/proto/customer/ \
+		-I /usr/include \
+		--go_out=paths=source_relative,plugins=grpc:grpc/proto/customer/ \
+		grpc/proto/customer/customer.proto

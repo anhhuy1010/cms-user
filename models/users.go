@@ -5,37 +5,33 @@ import (
 	"log"
 	"time"
 
-	"github.com/anhhuy1010/cms-user/database"
-	"github.com/anhhuy1010/cms-user/helpers/util"
+	"github.com/anhhuy1010/DATN-cms-customer/database"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 
 	//"go.mongodb.org/mongo-driver/bson"
 
-	"github.com/anhhuy1010/cms-user/constant"
+	"github.com/anhhuy1010/DATN-cms-customer/constant"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Users struct {
-	Uuid      string    `json:"uuid,omitempty" bson:"uuid"`
-	Password  string    `json:"password" bson:"password"`
-	Email     string    `json:"email,omitempty" bson:"email"`
-	Username  string    `json:"username,omitempty" bson:"username"`
-	IsActive  int       `json:"is_active" bson:"is_active"`
-	IsDelete  int       `json:"is_delete" bson:"is_delete"`
-	Role      string    `json:"role" bson:"role"`
-	CreatedAt time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
-	CreatedBy *string   `json:"created_by" bson:"created_by"`
-	UpdatedBy *string   `json:"updated_by" bson:"updated_by"`
+type Customer struct {
+	Uuid     string     `json:"uuid,omitempty" bson:"uuid"`
+	Password string     `json:"password" bson:"password"`
+	Email    string     `json:"email,omitempty" bson:"email"`
+	Username string     `json:"username,omitempty" bson:"username"`
+	IsActive int        `json:"is_active" bson:"is_active"`
+	IsDelete int        `json:"is_delete" bson:"is_delete"`
+	StartDay *time.Time `json:"startday" bson:"startday"`
+	EndDay   *time.Time `json:"endday" bson:"endday"`
 }
 
-func (u *Users) Model() *mongo.Collection {
+func (u *Customer) Model() *mongo.Collection {
 	db := database.GetInstance()
-	return db.Collection("users")
+	return db.Collection("customer")
 }
 
-func (u *Users) Find(conditions map[string]interface{}, opts ...*options.FindOptions) ([]*Users, error) {
+func (u *Customer) Find(conditions map[string]interface{}, opts ...*options.FindOptions) ([]*Customer, error) {
 	coll := u.Model()
 
 	conditions["is_delete"] = constant.UNDELETE
@@ -44,9 +40,9 @@ func (u *Users) Find(conditions map[string]interface{}, opts ...*options.FindOpt
 		return nil, err
 	}
 
-	var users []*Users
+	var users []*Customer
 	for cursor.Next(context.TODO()) {
-		var elem Users
+		var elem Customer
 		err := cursor.Decode(&elem)
 		if err != nil {
 			return nil, err
@@ -63,7 +59,7 @@ func (u *Users) Find(conditions map[string]interface{}, opts ...*options.FindOpt
 	return users, nil
 }
 
-func (u *Users) Pagination(ctx context.Context, conditions map[string]interface{}, modelOptions ...ModelOption) ([]*Users, error) {
+func (u *Customer) Pagination(ctx context.Context, conditions map[string]interface{}, modelOptions ...ModelOption) ([]*Customer, error) {
 	coll := u.Model()
 
 	conditions["is_delete"] = constant.UNDELETE
@@ -75,9 +71,9 @@ func (u *Users) Pagination(ctx context.Context, conditions map[string]interface{
 		return nil, err
 	}
 
-	var users []*Users
+	var users []*Customer
 	for cursor.Next(context.TODO()) {
-		var elem Users
+		var elem Customer
 		err := cursor.Decode(&elem)
 		if err != nil {
 			log.Println("[Decode] PopularCuisine:", err)
@@ -96,7 +92,7 @@ func (u *Users) Pagination(ctx context.Context, conditions map[string]interface{
 	return users, nil
 }
 
-func (u *Users) Distinct(conditions map[string]interface{}, fieldName string, opts ...*options.DistinctOptions) ([]interface{}, error) {
+func (u *Customer) Distinct(conditions map[string]interface{}, fieldName string, opts ...*options.DistinctOptions) ([]interface{}, error) {
 	coll := u.Model()
 
 	conditions["is_delete"] = constant.UNDELETE
@@ -109,7 +105,7 @@ func (u *Users) Distinct(conditions map[string]interface{}, fieldName string, op
 	return values, nil
 }
 
-func (u *Users) FindOne(conditions map[string]interface{}) (*Users, error) {
+func (u *Customer) FindOne(conditions map[string]interface{}) (*Customer, error) {
 	coll := u.Model()
 
 	conditions["is_delete"] = constant.UNDELETE
@@ -121,7 +117,7 @@ func (u *Users) FindOne(conditions map[string]interface{}) (*Users, error) {
 	return u, nil
 }
 
-func (u *Users) Insert() (interface{}, error) {
+func (u *Customer) Insert() (interface{}, error) {
 	coll := u.Model()
 
 	resp, err := coll.InsertOne(context.TODO(), u)
@@ -132,7 +128,7 @@ func (u *Users) Insert() (interface{}, error) {
 	return resp, nil
 }
 
-func (u *Users) InsertMany(Users []interface{}) ([]interface{}, error) {
+func (u *Customer) InsertMany(Users []interface{}) ([]interface{}, error) {
 	coll := u.Model()
 
 	resp, err := coll.InsertMany(context.TODO(), Users)
@@ -143,13 +139,12 @@ func (u *Users) InsertMany(Users []interface{}) ([]interface{}, error) {
 	return resp.InsertedIDs, nil
 }
 
-func (u *Users) Update() (int64, error) {
+func (u *Customer) Update() (int64, error) {
 	coll := u.Model()
 
 	condition := make(map[string]interface{})
 	condition["uuid"] = u.Uuid
 
-	u.UpdatedAt = util.GetNowUTC()
 	updateStr := make(map[string]interface{})
 	updateStr["$set"] = u
 
@@ -161,7 +156,7 @@ func (u *Users) Update() (int64, error) {
 	return resp.ModifiedCount, nil
 }
 
-func (u *Users) UpdateByCondition(condition map[string]interface{}, data map[string]interface{}) (int64, error) {
+func (u *Customer) UpdateByCondition(condition map[string]interface{}, data map[string]interface{}) (int64, error) {
 	coll := u.Model()
 
 	resp, err := coll.UpdateOne(context.TODO(), condition, data)
@@ -172,7 +167,7 @@ func (u *Users) UpdateByCondition(condition map[string]interface{}, data map[str
 	return resp.ModifiedCount, nil
 }
 
-func (u *Users) UpdateMany(conditions map[string]interface{}, updateData map[string]interface{}) (int64, error) {
+func (u *Customer) UpdateMany(conditions map[string]interface{}, updateData map[string]interface{}) (int64, error) {
 	coll := u.Model()
 	resp, err := coll.UpdateMany(context.TODO(), conditions, updateData)
 	if err != nil {
@@ -182,7 +177,7 @@ func (u *Users) UpdateMany(conditions map[string]interface{}, updateData map[str
 	return resp.ModifiedCount, nil
 }
 
-func (u *Users) Count(ctx context.Context, condition map[string]interface{}) (int64, error) {
+func (u *Customer) Count(ctx context.Context, condition map[string]interface{}) (int64, error) {
 	coll := u.Model()
 
 	condition["is_delete"] = constant.UNDELETE
@@ -194,7 +189,7 @@ func (u *Users) Count(ctx context.Context, condition map[string]interface{}) (in
 
 	return total, nil
 }
-func (u *Users) HashPassword() error {
+func (u *Customer) HashPassword() error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err

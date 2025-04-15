@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"github.com/anhhuy1010/cms-user/config"
-	"github.com/anhhuy1010/cms-user/helpers/translator"
+	"github.com/anhhuy1010/DATN-cms-customer/config"
+	"github.com/anhhuy1010/DATN-cms-customer/helpers/translator"
 	"github.com/gin-gonic/gin"
 )
 

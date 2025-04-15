@@ -7,21 +7,18 @@ import (
 	"math"
 	"net/http"
 
-	"github.com/anhhuy1010/cms-user/constant"
-	"github.com/anhhuy1010/cms-user/grpc"
+	"github.com/anhhuy1010/DATN-cms-customer/constant"
+	"github.com/anhhuy1010/DATN-cms-customer/grpc"
+	pbUsers "github.com/anhhuy1010/DATN-cms-customer/grpc/proto/users"
 
-	pbUsers "github.com/anhhuy1010/cms-user/grpc/proto/users"
-	"github.com/anhhuy1010/cms-user/helpers/respond"
-	"github.com/anhhuy1010/cms-user/helpers/util"
-	"github.com/anhhuy1010/cms-user/models"
-	request "github.com/anhhuy1010/cms-user/request/user"
-	"golang.org/x/crypto/bcrypt"
-
-	"time"
-
+	"github.com/anhhuy1010/DATN-cms-customer/helpers/respond"
+	"github.com/anhhuy1010/DATN-cms-customer/helpers/util"
+	"github.com/anhhuy1010/DATN-cms-customer/models"
+	request "github.com/anhhuy1010/DATN-cms-customer/request/user"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"go.mongodb.org/mongo-driver/bson"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserController struct {
@@ -29,7 +26,8 @@ type UserController struct {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) List(c *gin.Context) {
-	userModel := new(models.Users)
+
+	userModel := new(models.Customer)
 	var req request.GetListRequest
 	err := c.ShouldBindWith(&req, binding.Query)
 	if err != nil {
@@ -62,7 +60,6 @@ func (userCtl UserController) List(c *gin.Context) {
 			Uuid:     user.Uuid,
 			UserName: user.Username,
 			IsActive: user.IsActive,
-			Role:     user.Role,
 		}
 		respData = append(respData, res)
 	}
@@ -78,7 +75,7 @@ func (userCtl UserController) List(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Detail(c *gin.Context) {
-	userModel := new(models.Users)
+	userModel := new(models.Customer)
 	var reqUri request.GetDetailUri
 
 	err := c.ShouldBindUri(&reqUri)
@@ -102,7 +99,6 @@ func (userCtl UserController) Detail(c *gin.Context) {
 		Email:    user.Email,
 		IsActive: user.IsActive,
 		IsDelete: user.IsDelete,
-		Role:     user.Role,
 	}
 
 	c.JSON(http.StatusOK, respond.Success(response, "Successfully"))
@@ -110,7 +106,7 @@ func (userCtl UserController) Detail(c *gin.Context) {
 
 // ////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Update(c *gin.Context) {
-	userModel := new(models.Users)
+	userModel := new(models.Customer)
 	var reqUri request.UpdateUri
 
 	err := c.ShouldBindUri(&reqUri)
@@ -142,9 +138,6 @@ func (userCtl UserController) Update(c *gin.Context) {
 	if req.UserName != "" {
 		user.Username = req.UserName
 	}
-	if req.Role != "" {
-		user.Role = req.Role
-	}
 	_, err = user.Update()
 	if err != nil {
 		fmt.Println(err.Error())
@@ -156,7 +149,7 @@ func (userCtl UserController) Update(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) Delete(c *gin.Context) {
-	userModel := new(models.Users)
+	userModel := new(models.Customer)
 	var reqUri request.DeleteUri
 	// Validation input
 	err := c.ShouldBindUri(&reqUri)
@@ -187,7 +180,7 @@ func (userCtl UserController) Delete(c *gin.Context) {
 
 // //////////////////////////////////////////////////////////////////////////
 func (userCtl UserController) UpdateStatus(c *gin.Context) {
-	userModel := new(models.Users)
+	userModel := new(models.Customer)
 	var reqUri request.UpdateStatusUri
 	// Validation input
 	err := c.ShouldBindUri(&reqUri)
@@ -237,16 +230,13 @@ func (userCtl UserController) Create(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
 	}
-	userData := models.Users{}
+	userData := models.Customer{}
 	userData.Uuid = util.GenerateUUID()
 	userData.Username = req.Username
 	userData.Password = req.Password
 	userData.Email = req.Email
 	userData.IsActive = 1
 	userData.Password = req.Password
-	userData.Role = "user"
-	userData.CreatedAt = time.Time{}
-	userData.UpdatedAt = time.Time{}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userData.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -267,84 +257,101 @@ func (userCtl UserController) Create(c *gin.Context) {
 
 // /////////////////////////////////////////////////////
 func (userCtl UserController) Login(c *gin.Context) {
-	adminModel := models.Users{}
+	fmt.Println("🚀 Bắt đầu xử lý login")
 
-	var req request.LoginRequestAdmin
-	err := c.ShouldBindJSON(&req)
-	if err != nil {
-		_ = c.Error(err)
+	// Bind JSON từ body vào struct
+	var req request.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		fmt.Printf("❌ Lỗi bind JSON: %v\n", err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
 	}
+	fmt.Printf("📥 Dữ liệu nhận được: %+v\n", req)
 
-	condition := bson.M{"username": req.UserName}
-	admin, err := adminModel.FindOne(condition)
+	// Tìm user theo email
+	condition := bson.M{"email": req.Email}
+	userModel := models.Customer{}
+	user, err := userModel.FindOne(condition)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Printf("❌ Lỗi tìm user: %v\n", err)
 		c.JSON(http.StatusBadRequest, respond.ErrorCommon("user not found"))
 		return
 	}
-	err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(req.Password))
-	if err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, respond.ErrorCommon("invalid password"))
-		return
-	}
-	token, err := util.GenerateJWT(admin.Username)
-	if err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusBadRequest, respond.ErrorCommon("found"))
-		return
-	}
-	adminLogin := models.Tokens{}
-	adminLogin.UserUuid = admin.Uuid
-	adminLogin.Uuid = util.GenerateUUID()
-	adminLogin.Token = token
-	adminLogin.IsDelete = 0
+	fmt.Printf("✅ Tìm thấy user: %+v\n", user)
 
-	_, err = adminLogin.Insert()
+	// So sánh mật khẩu
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
-		fmt.Println(err.Error())
-		c.JSON(http.StatusOK, respond.UpdatedFail())
+		fmt.Printf("❌ Mật khẩu sai: %v\n", err)
+		c.JSON(http.StatusUnauthorized, respond.ErrorCommon("invalid password"))
 		return
 	}
-	c.JSON(http.StatusOK, respond.Success(request.LoginResponseAdmin{Token: token}, "login successfully"))
+	fmt.Println("🔐 Mật khẩu chính xác")
+
+	// Sinh JWT token
+	token, err := util.GenerateJWT(user.Username, nil, nil)
+	if err != nil {
+		fmt.Printf("❌ Lỗi tạo token: %v\n", err)
+		c.JSON(http.StatusInternalServerError, respond.ErrorCommon("failed to generate token"))
+		return
+	}
+	fmt.Println("✅ Token đã được tạo")
+
+	// Lưu token vào DB
+	userLogin := models.Tokens{
+		UserUuid: user.Uuid,
+		Uuid:     util.GenerateUUID(),
+		Token:    token,
+		IsDelete: 0,
+	}
+
+	_, err = userLogin.Insert()
+	if err != nil {
+		fmt.Printf("❌ Lỗi lưu token: %v\n", err)
+		c.JSON(http.StatusInternalServerError, respond.UpdatedFail())
+		return
+	}
+	fmt.Println("✅ Token đã được lưu")
+
+	// Trả về thành công
+	c.JSON(http.StatusOK, respond.Success(request.LoginResponse{Token: token}, "login successfully"))
 }
 
 ////////////////////////////////////////////////////////////////////////////
 
 func (userCtl UserController) SignUp(c *gin.Context) {
-	var req request.SignUpRequestAdmin
+	var req request.SignUpRequest
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		_ = c.Error(err)
 		c.JSON(http.StatusBadRequest, respond.MissingParams())
 		return
 	}
-	adminSignup := models.Users{}
-	adminSignup.IsActive = 1
-	adminSignup.Uuid = util.GenerateUUID()
-	adminSignup.Username = req.UserName
-	adminSignup.Password = req.Password
-	adminSignup.Role = req.Role
-	adminSignup.Email = req.Email
+	userSignup := models.Customer{}
+	userSignup.IsActive = 1
+	userSignup.Uuid = util.GenerateUUID()
+	userSignup.Username = req.UserName
+	userSignup.Password = req.Password
+	userSignup.Email = req.Email
+	userSignup.StartDay = nil
+	userSignup.EndDay = nil
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminSignup.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(userSignup.Password), bcrypt.DefaultCost)
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusBadRequest, respond.ErrorCommon("invalid password"))
 		return
 	}
-	adminSignup.Password = string(hashedPassword)
+	userSignup.Password = string(hashedPassword)
 
-	_, err = adminSignup.Insert()
+	_, err = userSignup.Insert()
 	if err != nil {
 		fmt.Println(err.Error())
 		c.JSON(http.StatusOK, respond.UpdatedFail())
 		return
 	}
 
-	c.JSON(http.StatusOK, respond.Success(adminSignup.Uuid, "sign up successfully"))
+	c.JSON(http.StatusOK, respond.Success(userSignup.Uuid, "sign up successfully"))
 }
 
 func (userCtl UserController) CheckRole(token string) (*pbUsers.DetailResponse, error) {
@@ -361,7 +368,7 @@ func (userCtl UserController) CheckRole(token string) (*pbUsers.DetailResponse, 
 }
 func (userCtl UserController) GetRoleByToken(token string) (*request.CheckRoleResponse, error) {
 	tokenModel := models.Tokens{}
-	userModel := models.Users{}
+	userModel := models.Customer{}
 
 	condition := bson.M{"token": token}
 	tokenDoc, err := tokenModel.FindOne(condition)
@@ -379,8 +386,9 @@ func (userCtl UserController) GetRoleByToken(token string) (*request.CheckRoleRe
 	}
 
 	resp := &request.CheckRoleResponse{
-		UserUuid: user.Uuid,
-		Role:     user.Role,
+		UserUuid:     user.Uuid,
+		UserStartDay: *user.StartDay,
+		UserEndDay:   *user.EndDay,
 	}
 	return resp, nil
 }
@@ -402,14 +410,9 @@ func RoleMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("userRole", resp.Role)
+		c.Set("userStartDay", resp.UserStartDay)
+		c.Set("userEndDay", resp.UserEndDay)
 		c.Set("userUuid", resp.UserUuid)
-
-		if resp.Role != "admin" && c.Request.Method != http.MethodGet {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
-			c.Abort()
-			return
-		}
 		c.Next()
 	}
 }

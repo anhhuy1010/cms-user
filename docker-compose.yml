@@ -1,13 +1,12 @@
 version: "2"
 services:
   app:
-    container_name: cms-user
+    container_name: DATN-cms-customer
     build:
       context: .
       dockerfile: .docker/Dockerfile-dev
     volumes:
-      - ./:/go/src/github.com/anhhuy1010/cms-user
+      - ./:/go/src/github.com/anhhuy1010/DATN-cms-customer
     ports:
-      - 8002:8002
-      - 5002:5002
-
+      - 7003:7003
+      - 9003:9003

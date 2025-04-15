@@ -10,8 +10,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/anhhuy1010/cms-user/config"
-	"github.com/anhhuy1010/cms-user/helpers/util"
+	"github.com/anhhuy1010/DATN-cms-customer/config"
+	"github.com/anhhuy1010/DATN-cms-customer/helpers/util"
 )
 
 var dataTranslation map[string]map[string]string

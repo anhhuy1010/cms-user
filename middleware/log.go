@@ -7,7 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/anhhuy1010/cms-user/helpers/util"
+	"github.com/anhhuy1010/DATN-cms-customer/helpers/util"
 	"github.com/gin-gonic/gin"
 )
 

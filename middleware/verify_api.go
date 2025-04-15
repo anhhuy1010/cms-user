@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/anhhuy1010/cms-user/config"
-	"github.com/anhhuy1010/cms-user/helpers/respond"
+	"github.com/anhhuy1010/DATN-cms-customer/config"
+	"github.com/anhhuy1010/DATN-cms-customer/helpers/respond"
 )
 
 func VerifyApi() gin.HandlerFunc {

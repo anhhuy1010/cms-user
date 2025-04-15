@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/anhhuy1010/cms-user/config"
+	"github.com/anhhuy1010/DATN-cms-customer/config"
 )
 
 var db *mongo.Database
@@ -24,27 +24,42 @@ func Init() (*mongo.Database, error) {
 		ssl := cfg.GetBool("database.ssl")
 
 		var uri string
-		if ssl == true {
-			uri = fmt.Sprintf(`mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority&readPreference=secondaryPreferred`, user, password, host)
+		if ssl {
+			// URI MongoDB Atlas (mongodb+srv)
+			uri = fmt.Sprintf("mongodb+srv://%s:%s@%s/?retryWrites=true&w=majority&readPreference=secondaryPreferred",
+				user, password, host)
 		} else {
-			uri = fmt.Sprintf(`mongodb://%s:%s@%s:%s/?authMechanism=SCRAM-SHA-256`, user, password, host, port)
+			// URI MongoDB local hoặc không dùng TLS
+			uri = fmt.Sprintf("mongodb://%s:%s@%s:%s/?authMechanism=SCRAM-SHA-256",
+				user, password, host, port)
 		}
+
+		// In your case, using a direct MongoDB Atlas connection string
+		uri = "mongodb+srv://tranbaoanhhuy:tranbaoanhhuy@imatch.knntasg.mongodb.net/?retryWrites=true&w=majority&appName=IMATCH"
+
+		fmt.Printf("🔗 MongoDB URI: %s\n", uri) // debug URI
 
 		ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 		defer cancel()
-		optionsClient := options.Client()
-		optionsClient.ApplyURI(uri)
-		client, err := mongo.Connect(ctx, optionsClient)
+		clientOptions := options.Client().ApplyURI(uri)
+
+		client, err := mongo.Connect(ctx, clientOptions)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("❌ Kết nối MongoDB thất bại:", err)
+			return nil, err
+		}
+
+		if err := client.Ping(ctx, nil); err != nil {
+			fmt.Println("❌ Ping MongoDB thất bại:", err)
 			return nil, err
 		}
 
 		db = client.Database(database)
+		fmt.Println("✅ Đã kết nối MongoDB thành công.")
 	}
 
 	return db, nil
-}   
+}
 
 func GetInstance() *mongo.Database {
 	return db
